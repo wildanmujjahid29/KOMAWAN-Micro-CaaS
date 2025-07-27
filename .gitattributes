@@ -1,0 +1,2 @@
+# Force GitHub to detect this as a Python project
+*.py linguist-language=Python
