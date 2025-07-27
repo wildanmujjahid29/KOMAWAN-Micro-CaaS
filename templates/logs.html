@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Logs - {{ container.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glassmorphism {
+            background: rgba(26, 29, 41, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        .neon-text { text-shadow: 0 0 10px #00ff88; }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-green-300 font-mono min-h-screen">
+    <header class="glassmorphism border-b border-green-500/30 p-4">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold neon-text">📋 Container Logs: {{ container.name }}</h1>
+            <a href="{{ url_for('index') }}" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-all">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <div class="p-6">
+        <div class="glassmorphism rounded-xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-green-400">Container Information</h2>
+                <div class="flex space-x-2">
+                    <span class="bg-blue-600/20 px-3 py-1 rounded-full text-sm">ID: {{ container.short_id }}</span>
+                    <span class="bg-purple-600/20 px-3 py-1 rounded-full text-sm">Status: {{ container.status }}</span>
+                </div>
+            </div>
+            
+            <div class="bg-black/80 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <pre class="text-green-400 text-sm whitespace-pre-wrap">{{ logs if logs else 'No logs available' }}</pre>
+            </div>
+            
+            <div class="mt-4 flex space-x-3">
+                <button onclick="refreshLogs()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-all">
+                    🔄 Refresh Logs
+                </button>
+                <button onclick="downloadLogs()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-all">
+                    💾 Download Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshLogs() {
+            location.reload();
+        }
+        
+        function downloadLogs() {
+            const logs = `{{ logs | safe }}`;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `{{ container.name }}_logs.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

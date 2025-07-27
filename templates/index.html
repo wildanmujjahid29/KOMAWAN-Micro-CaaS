@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro CaaS Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-green': '#00ff88',
+                        'dark-bg': '#0a0b0d',
+                        'card-bg': '#1a1d29',
+                        'border-glow': '#00ff88'
+                    },
+                    animation: {
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slide-up 0.3s ease-out',
+                        'fade-in': 'fade-in 0.5s ease-out'
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { boxShadow: '0 0 5px #00ff88' },
+                            '50%': { boxShadow: '0 0 20px #00ff88, 0 0 30px #00ff88' }
+                        },
+                        'slide-up': {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        'fade-in': {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glassmorphism {
+            background: rgba(26, 29, 41, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        .neon-text {
+            text-shadow: 0 0 10px #00ff88;
+        }
+        .hover-glow:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        .status-running { color: #00ff88; text-shadow: 0 0 5px #00ff88; }
+        .status-stopped { color: #ff4444; text-shadow: 0 0 5px #ff4444; }
+        .status-pending { color: #ffaa00; text-shadow: 0 0 5px #ffaa00; }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-dark-bg via-gray-900 to-dark-bg text-green-300 font-mono min-h-screen">
+    <!-- Header -->
+    <header class="glassmorphism border-b border-neon-green/30 p-4 sticky top-0 z-50">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-3xl font-bold neon-text">⚡ Micro CaaS Dashboard</h1>
+                <div class="flex space-x-2">
+                    <div class="w-3 h-3 bg-neon-green rounded-full animate-pulse-glow"></div>
+                    <span class="text-sm">System Online</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2 rounded-lg transition-all duration-300">
+                    🔴 Emergency Stop
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-screen pt-4 gap-4 p-4">
+        <!-- Left Panel: Create Server & Quick Actions -->
+        <aside class="w-1/4 space-y-4 overflow-y-auto animate-fade-in">
+            <!-- Create Server Form -->
+            <div class="glassmorphism rounded-xl p-6 hover-glow">
+                <h2 class="text-xl font-bold text-neon-green mb-4 flex items-center">
+                    🛠️ Deploy New Server
+                </h2>
+                <form action="/create" method="post" class="space-y-4">
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Container Name:</label>
+                        <input type="text" name="nama_kontainer" required 
+                               class="w-full bg-gray-900/50 border border-neon-green/50 px-3 py-3 rounded-lg focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 transition-all" 
+                               placeholder="web-server-01" />
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Client Name:</label>
+                        <input type="text" name="penyewa" required 
+                               class="w-full bg-gray-900/50 border border-neon-green/50 px-3 py-3 rounded-lg focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 transition-all" 
+                               placeholder="John Doe" />
+                    </div>
+                    <div>
+                        <label class="block mb-2 text-sm font-semibold">Description:</label>
+                        <textarea name="deskripsi" 
+                                  class="w-full bg-gray-900/50 border border-neon-green/50 px-3 py-3 rounded-lg focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 transition-all resize-none" 
+                                  rows="3" placeholder="Production web server for client portal..."></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-neon-green to-green-400 hover:from-green-400 hover:to-neon-green py-3 rounded-lg text-black font-bold transition-all duration-300 hover-glow">
+                        Deploy Server
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Center Panel: Container Management -->
+        <main class="w-1/2 space-y-4 overflow-y-auto animate-fade-in">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="glassmorphism rounded-lg p-4 animate-slide-up
+                                {% if category == 'success' %}border-green-500/50 bg-green-900/20{% endif %}
+                                {% if category == 'danger' %}border-red-500/50 bg-red-900/20{% endif %}
+                                {% if category == 'warning' %}border-yellow-500/50 bg-yellow-900/20{% endif %}">
+                                <div class="flex items-center space-x-2">
+                                    {% if category == 'success' %}
+                                        <span class="text-green-400">✅</span>
+                                    {% elif category == 'danger' %}
+                                        <span class="text-red-400">❌</span>
+                                    {% else %}
+                                        <span class="text-yellow-400">⚠️</span>
+                                    {% endif %}
+                                    <span class="text-sm">{{ message }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <!-- Search and Filters -->
+            <div class="glassmorphism rounded-xl p-4">
+                <form action="/" method="get" class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <input type="text" name="search" placeholder="🔍 Search containers or clients..." 
+                               value="{{ search }}" 
+                               class="w-full bg-gray-900/50 border border-neon-green/50 px-4 py-3 rounded-lg focus:border-neon-green focus:ring-2 focus:ring-neon-green/20 transition-all" />
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center space-x-2 text-green-300 cursor-pointer">
+                            <input type="checkbox" name="show_all" value="1" {% if show_all %}checked{% endif %} 
+                                   class="w-4 h-4 text-neon-green bg-gray-900 border-neon-green rounded focus:ring-neon-green" />
+                            <span class="text-sm">Show All Containers</span>
+                        </label>
+                        <button type="submit" class="bg-neon-green hover:bg-green-400 px-6 py-3 rounded-lg text-black font-bold transition-all duration-300">
+                            Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Container Cards -->
+            <div class="space-y-4">
+                {% if containers %}
+                    {% for container in containers %}
+                        <div class="glassmorphism rounded-xl p-6 hover-glow animate-slide-up">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold text-neon-green">{{ container.name }}</h3>
+                                    <p class="text-sm text-gray-400">ID: {{ container.short_id }} • Image: {{ container.image }}</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="status-running text-sm font-bold">● {{ container.status }}</span>
+                                    <!-- <div class="bg-gray-700 px-3 py-1 rounded-full text-xs">
+                                        ⏱ 2h 34m
+                                    </div> -->
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <p class="text-sm font-semibold mb-2">🔧 Terminal Access:</p>
+                                <div class="bg-black/80 text-neon-green p-3 rounded-lg text-sm font-mono border border-neon-green/30">
+                                    <span class="text-gray-500">$</span> docker exec -it {{ container.short_id }} /bin/bash
+                                    <button class="float-right text-xs bg-neon-green text-black px-2 py-1 rounded hover:bg-green-400 transition-all">
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <div class="flex space-x-2">
+                                    <!-- Stop -->
+                                    <form action="/stop/{{ container.id }}" method="post" style="display: inline;">
+                                        <button class="bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300">
+                                            ⏸ Stop
+                                        </button>
+                                    </form>
+
+                                    <!-- Restart -->
+                                    <form action="/restart/{{ container.id }}" method="post" style="display: inline;">
+                                        <button class="bg-blue-600/80 hover:bg-blue-600 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300">
+                                            🔄 Restart
+                                        </button>
+                                    </form>
+
+                                    <!-- Logs -->
+                                    <a href="/logs/{{ container.id }}" class="bg-green-600/80 hover:bg-green-600 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300">
+                                        📊 Logs
+                                    </a>
+
+                                    <!-- Delete -->
+                                    <form action="/delete/{{ container.id }}" method="post" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus kontainer ini?')">
+                                        <button class="bg-gray-700/80 hover:bg-gray-600 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300">
+                                            🗑 Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="glassmorphism rounded-xl p-12 text-center">
+                        <div class="text-6xl mb-4">🚀</div>
+                        <h3 class="text-xl font-bold text-neon-green mb-2">No Containers Found</h3>
+                        <p class="text-gray-400 mb-6">Deploy your first server to get started with your micro IaaS platform.</p>
+                        <button class="bg-neon-green hover:bg-green-400 px-6 py-3 rounded-lg text-black font-bold transition-all duration-300">
+                            Create First Server
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+
+        <!-- Right Panel: Analytics & History -->
+        <aside class="w-1/4 space-y-4 overflow-y-auto animate-fade-in">
+            
+            <!-- Server History -->
+            <div class="glassmorphism rounded-xl p-6">
+                <h3 class="text-lg font-bold text-neon-green mb-4">📜 Server History</h3>
+                <div class="overflow-x-auto">
+                    <table class="text-xs w-full">
+                        <thead class="text-neon-green border-b border-neon-green/30">
+                            <tr>
+                                <th class="py-2 text-left">Name</th>
+                                <th class="py-2 text-left">Client</th>
+                                <th class="py-2 text-left">Status</th>
+                                <th class="py-2 text-left">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-300">
+                            {% for row in riwayat %}
+                                <tr class="border-b border-gray-700/50 hover:bg-gray-800/30">
+                                    <td class="py-2">{{ (row[1][:8] + '...') if row[1]|length > 8 else row[1] }}</td>
+                                    <td class="py-2">{{ (row[2][:6] + '...') if row[2]|length > 6 else row[2] }}</td>
+                                    <td class="py-2">
+                                        {% if row[5] == 'created' %}
+                                            <span class="status-running">● {{ row[5] }}</span>
+                                        {% elif row[5] == 'stopped' %}
+                                            <span class="status-stopped">● {{ row[5] }}</span>
+                                        {% elif row[5] == 'deleted' %}
+                                            <span class="status-stopped">● {{ row[5] }}</span>
+                                        {% else %}
+                                            <span class="status-pending">● {{ row[5] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-2">{{ row[4].strftime('%m-%d %H:%M') if row[4] else 'N/A' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- Floating Action Button -->
+    <!-- <div class="fixed bottom-6 right-6">
+        <button class="bg-gradient-to-r from-neon-green to-green-400 hover:from-green-400 hover:to-neon-green w-14 h-14 rounded-full text-black text-2xl shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse-glow">
+            ⚡
+        </button>
+    </div> -->
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        // Copy terminal command functionality
+        document.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent.includes('Copy')) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const command = btn.parentElement.textContent.replace('Copy', '').trim();
+                    navigator.clipboard.writeText(command);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = 'Copy', 2000);
+                });
+            }
+        });
+
+        // Add loading states to form submissions
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '⏳ Processing...';
+                    submitBtn.disabled = true;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
