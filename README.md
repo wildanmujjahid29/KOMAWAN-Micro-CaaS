@@ -1,4 +1,4 @@
-# KOMAWAN Micro-CaaS
+# Micro-CaaS
 
 ## Anggota Kelompok
 
